@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Implementation-Title: spider
+Implementation-Version: 0.0.1-SNAPSHOT
+Built-By: 18368
+Implementation-Vendor-Id: com.zc.spider
+Build-Jdk: 1.8.0_172
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-bo
+ ot-starter-parent/spider
+Created-By: Maven Integration for Eclipse
+
