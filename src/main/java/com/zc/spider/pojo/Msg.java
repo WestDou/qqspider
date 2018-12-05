@@ -17,7 +17,7 @@ public class Msg {
 	private Long id;
 	@Column(length=32)
 	private String name;
-	@Column(length=500)
+	@Column(length=16000)
 	private String content;
 	@Column(length=32)
 	private String createTime;
@@ -25,6 +25,14 @@ public class Msg {
 	private ArrayList<Pic> pic;
 	@Column(length=32)
 	private String source_name;
+	@Column(length=32)
+	private String uin;
+	public String getUin() {
+		return uin;
+	}
+	public void setUin(String uin) {
+		this.uin = uin;
+	}
 	public Long getId() {
 		return id;
 	}
@@ -61,13 +69,16 @@ public class Msg {
 	public void setSource_name(String source_name) {
 		this.source_name = source_name;
 	}
-	public Msg(String name, String content, String createTime, ArrayList<Pic> pic, String source_name) {
+	public Msg(Long id, String name, String content, String createTime, ArrayList<Pic> pic, String source_name,
+			String uin) {
 		super();
+		this.id = id;
 		this.name = name;
 		this.content = content;
 		this.createTime = createTime;
 		this.pic = pic;
 		this.source_name = source_name;
+		this.uin = uin;
 	}
 	public Msg() {
 		super();
@@ -75,9 +86,10 @@ public class Msg {
 	}
 	@Override
 	public String toString() {
-		return "Msg [name=" + name + ", content=" + content + ", createTime=" + createTime + ", pic=" + pic
-				+ ", source_name=" + source_name + "]";
+		return "Msg [id=" + id + ", name=" + name + ", content=" + content + ", createTime=" + createTime + ", pic="
+				+ pic + ", source_name=" + source_name + ", uin=" + uin + "]";
 	}
+	
 	
 	
 	
