@@ -15,7 +15,7 @@ public class Msg {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-	@Column(length=32)
+	@Column(length=100,name="qzone_name")
 	private String name;
 	@Column(length=16000)
 	private String content;
@@ -25,7 +25,7 @@ public class Msg {
 	private ArrayList<Pic> pic;
 	@Column(length=32)
 	private String source_name;
-	@Column(length=32)
+	@Column(length=32,name="qq_num")
 	private String uin;
 	public String getUin() {
 		return uin;

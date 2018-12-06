@@ -6,9 +6,12 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     username: root
     password: 216216
+logging:
+  path: C:/Users/18368/Desktop/log
+  file: spider
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
  
       

@@ -14,7 +14,7 @@ public class CrawlController {
 	private HttpClientCrawlerImpl httpClientCrawlerImpl;
 	@RequestMapping(value = "crawl")
 	private void crawl() {
-		httpClientCrawlerImpl.qqCrawl();
+		httpClientCrawlerImpl.qqCrawl("","",100000000,199930000,"");
 		
 	}
 

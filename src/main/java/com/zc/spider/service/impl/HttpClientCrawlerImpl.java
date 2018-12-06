@@ -1,8 +1,14 @@
 package com.zc.spider.service.impl;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
@@ -10,6 +16,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.omg.CORBA.Current;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,20 +24,26 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.zc.spider.dao.CrawlDao;
+import com.zc.spider.dao.PicDao;
 import com.zc.spider.pojo.CrawlResultPojo;
 import com.zc.spider.pojo.Msg;
+import com.zc.spider.pojo.Pic;
 import com.zc.spider.pojo.ResponseResult;
 import com.zc.spider.pojo.UrlPojo;
 import com.zc.spider.service.iface.ICrawler;
+
 @Service
 public class HttpClientCrawlerImpl implements ICrawler {
-	
+
 	private Logger log = LoggerFactory.getLogger(HttpClientCrawlerImpl.class);
-	
+
 	@Autowired
 	private CrawlDao crawDao;
+	@Autowired
+	private PicDao picDao;
+
 	@Override
-	public CrawlResultPojo crawl(UrlPojo urlPojo) {
+	public CrawlResultPojo crawl(UrlPojo urlPojo,String cookie) {
 		CrawlResultPojo resultPojo = new CrawlResultPojo();
 		if (urlPojo == null) {
 			resultPojo.setSuccess(false);
@@ -39,12 +52,13 @@ public class HttpClientCrawlerImpl implements ICrawler {
 		CloseableHttpClient httpClient = HttpClients.custom().build();
 		// 采用get方式
 		HttpGet httpGet = new HttpGet(urlPojo.getUrl());
-		//将cookie设置进去
-		String cookies = "pgv_pvi=435138560; pgv_pvid=4687176740; RK=G45lqAMRGp; ptcz=0714c43c92a82063efca4d0204fe2c6fe2bc45fc97cbdca8bd1918b3c394a1f7; tvfe_boss_uuid=a4d7cb814103c1e8; o_cookie=1836810134; pac_uid=1_1836810134; pgv_si=s7687701504; pgv_info=ssid=s512303782; _qpsvr_localtk=0.06915683482830093; ptisp=ctc; ptui_loginuin=1835901302; pt2gguin=o1835901302; qz_screen=1280x720; 1835901302_todaycount=0; 1835901302_totalcount=2; QZ_FE_WEBP_SUPPORT=1; __Q_w_s__QZN_TodoMsgCnt=1; 3g_guest_id=-8680516557538853000; g_ut=2; zzpaneluin=; zzpanelkey=; cpu_performance_v8=15; __Q_w_s_hat_seed=1; rv2=8068B98791C4AA8006B8D2FB1A6292B04D5AA4A608980219FA; property20=930EB040D36FCB82E0062EACDAF979C15B3F3CFA2F1D6524A805A4E02DDC9A1C9DF2A9B9C4E992A6; uin=o1835901302; skey=@iEuhs9moa; p_uin=o1835901302; pt4_token=1sCVUKeIY9xXgXP4iE9qKTw*0zqYAX1*8DI1yFSML2k_; p_skey=vHwQB5n0LKkwkO907*P7-4gRxS*Bzxnenlex7Hsm3tM_; Loading=Yes";
-		httpGet.addHeader("cookie", cookies);
+		// 将cookie设置进去
+		httpGet.addHeader("cookie", cookie);
 		BufferedReader br = null;
 		try {
+			log.info("正在连接...");
 			CloseableHttpResponse response = httpClient.execute(httpGet);
+			log.info("获取数据成功...");
 			HttpEntity entity = response.getEntity();
 			br = new BufferedReader(new InputStreamReader(entity.getContent(), "utf-8"));
 			String line = null;
@@ -67,35 +81,95 @@ public class HttpClientCrawlerImpl implements ICrawler {
 		}
 		return resultPojo;
 	}
-	
-	public void qqCrawl() {
-		for (int i = 180000000; i < 190000000; i++) {
-			for (int j = 0;; j+=20) {
+
+	public void qqCrawl(String url,String cookie ,long start, long end,String pic_path) {
+		final long s = start;
+		final long e = end;
+		for (long i = s; i < e; i++) {
+			//这个变量是用来给图片后面加后缀保证唯一性的
+			int pic_num = 1;
+			for (int j = 0;; j += 20) {
 				UrlPojo urlPojo = new UrlPojo();
-				urlPojo.setUrl(
-						"https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?uin="+i+"&ftype=0&sort=0&pos="+j+"&num=20&replynum=100&g_tk=975685539&callback=_preloadCallback&code_version=1&format=jsonp&need_private_comment=1&qzonetoken=8357940010636b18f0528dd9712620133916b856c4b419feae9a1be28b8473f8a2377992f1c8c95650c1&g_tk=975685539");
-				CrawlResultPojo crawl = crawl(urlPojo);
+				String u1 = url.replaceAll("(?<=uin=).[0-9]*", i+"");
+				String new_url = u1.replaceAll("(?<=pos=).{1}", j+"");
+				urlPojo.setUrl(new_url);
+				CrawlResultPojo crawl = crawl(urlPojo,cookie);
 				String pageContent = crawl.getPageContent();
+				try {
+					// 每次爬完一个页面，休息随机5到10秒
+					Thread.sleep((long) Math.random() * 5000 + 5000);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				// 解析json数据
 				pageContent = pageContent.substring(17, pageContent.length() - 2);
-//				 System.out.println(pageContent);
+				log.info(pageContent);
 				// 封装成javabean
 				ResponseResult responseResult = JSON.parseObject(pageContent, ResponseResult.class);
+				ArrayList<Msg> msglist = responseResult.getMsglist();
 				// 如果空间可以直接进去并且空间有说说的话就可以对数据进行统计
-				if (responseResult.getMsglist() != null) {
-					System.out.println("一共有" + responseResult.getMsglist().size() + "条说说" + responseResult);
-					ArrayList<Msg> msglist = responseResult.getMsglist();
+				if (msglist != null) {
+					// log.info("一共有" + responseResult.getMsglist().size() + "条说说" +
+					// responseResult);
 					for (Msg msg : msglist) {
 						crawDao.save(msg);
+						// log.info("当前是"+Thread.currentThread().getName()+"正在执行");
+						ArrayList<Pic> picList = msg.getPic();
+						// 如果存在图片
+						if (picList != null) {
+							for (Pic pic : picList) {
+								pic.setQq_num(msg.getUin());
+								picDao.save(pic);
+								try {
+									log.info("正在下载图片...");
+									//将有图片的自动下载到本地
+									download(pic.getUrl2(), pic_path+"\\"+pic.getQq_num()+"-"+(pic_num++)+".jpg");
+									log.info(pic.getUrl2());
+									log.info("下载图片结束");
+								} catch (Exception e1) {
+									// TODO Auto-generated catch block
+									log.error("{}",e);
+								}
+							}
+						}
 					}
-				}else {
+				} else {
 					break;
 				}
 			}
 		}
-		
-		
-		
+
 	}
+	//根据图片地址下载图片
+	public static void download(String _url,String path) throws Exception{
+		try{  
+		       URL url = new URL(_url);  
+		       URLConnection con = url.openConnection();  
+		       con.setConnectTimeout(5000);  
+		       InputStream is = con.getInputStream(); 
+		       byte[] bs = new byte[1024];   
+		       int len;  
+		      File sf=new File(path);  
+		      OutputStream os = new FileOutputStream(sf);  
+		       while ((len = is.read(bs)) != -1) {  
+		         os.write(bs, 0, len);  
+		       }   
+		       os.close();  
+		       is.close();  
+ 
+		} catch (IOException e) {
+		}        
+		}
+	
+	/*public static void main(String[] args) {
+		try {
+			download("http://b306.photo.store.qq.com/psb?/86581b80-c2b3-40f8-98a9-64d98dbf9cdb/Pf.elYlEgQnSkKZWCUYhlfhmtSLZRvP*a4RiJBV*W5Y!/m/dDIBAAAAAAAA&bo=OASABwAAAAAAAJ0!", "C:\\Users\\18368\\Desktop\\爬取图片\\33.jpg");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}*/
+
 
 }
