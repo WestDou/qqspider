@@ -7,6 +7,16 @@ public class ResponseResult {
 	
 	
 	private ArrayList<Msg> msglist;
+	
+	private String message;
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
 
 	public ArrayList<Msg> getMsglist() {
 		return msglist;
@@ -16,14 +26,18 @@ public class ResponseResult {
 		this.msglist = msglist;
 	}
 
+	
 	@Override
 	public String toString() {
-		return "ResponseResult [msglist=" + msglist + "]";
+		return "ResponseResult [msglist=" + msglist + ", message=" + message + "]";
 	}
 
-	public ResponseResult(ArrayList<Msg> msglist) {
+	
+
+	public ResponseResult(ArrayList<Msg> msglist, String message) {
 		super();
 		this.msglist = msglist;
+		this.message = message;
 	}
 
 	public ResponseResult() {
